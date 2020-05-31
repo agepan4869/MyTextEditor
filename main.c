@@ -33,7 +33,7 @@ int main(int argc,char *argv[]){
             current = current->next;
         }
         printf("%s",current->str);
-        printf("\e[39m\e[49m");     // reset
+        printf("\e[39m\e[49m\n");     // reset
 /*
         // reverse
         printf("\e[31m\e[47m");     // color
