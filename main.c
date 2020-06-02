@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <termios.h>
 
-#define BUFFER_SIZE 2
+#define BUFFER_SIZE 100
+
+struct termios CookedMode;
+struct termios RawMode;
 
 typedef struct _string{
     char str[BUFFER_SIZE];
@@ -16,24 +21,45 @@ void file_read(char *filename,string *head);
  *      main
  * ****************************/
 int main(int argc,char *argv[]){
-    printf("\e[2J\e[1;1H");     // ターミナルでclearするのと同じ処理
     string *head = malloc(sizeof(string));
     head->prev = NULL;
     head->next = NULL;
     if(argc != 2)
-        printf("error: invalid argument");
+        printf("error: invalid argument\n");
     else{
         file_read(argv[1],head);
         string *current = head;
 
+        int input_key;
+        tcgetattr(STDIN_FILENO,&CookedMode);
+        cfmakeraw(&RawMode);
+
+        tcsetattr(STDIN_FILENO,0,&RawMode);
+
         // normal
-        printf("\e[31m\e[47m");     // color
-        while(current->next){
+//        printf("\e[31m\e[47m");     // color
+        while(current){
+            printf("\e[2J\e[H");        // clear
             printf("%s",current->str);
-            current = current->next;
+
+            input_key = getchar();
+            if(input_key == 110){
+                // 110 = n
+                current = current->next;
+            }
+            if(input_key == 112){
+                // 112 = p
+                current = current->prev;
+            }
+            if(input_key == 101){
+                // 101 = e
+                printf("\e[2J\e[H");        // clear
+                printf("\e[39m\e[49m\n");     // reset
+                break;
+            }
         }
-        printf("%s",current->str);
-        printf("\e[39m\e[49m\n");     // reset
+        tcsetattr(STDIN_FILENO,0,&CookedMode);
+//        printf("\e[39m\e[49m\n");     // reset
 /*
         // reverse
         printf("\e[31m\e[47m");     // color
